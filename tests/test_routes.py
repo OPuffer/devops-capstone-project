@@ -127,26 +127,25 @@ class TestAccountService(TestCase):
 
     def test_view_all_accounts(self):
         "It should return all accounts"
-        accounts = []
-        for i in range(5):
-            accounts.append(AccountFactory())
-            create_response = self.client.post(
-                BASE_URL,
-                json=accounts[i].serialize(),
-                content_type="application/json"
-            )
-            self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
-        
+        accounts = account = self._create_accounts(5) 
         view_all = self.client.get(
                 BASE_URL,
                 content_type="application/json"
             )
         self.assertEqual(len(view_all.get_json()), 5)
-
         for j in range(5):
             self.assertEqual(view_all.get_json()[j]['name'], accounts[j].name)
+    
+    def test_view_all_wrong_datatype(self):
+        "View All should abort with code 415"
+        accounts = account = self._create_accounts(5) 
+        view_all = self.client.get(
+                BASE_URL,
+                content_type="text/html"
+            )
+        self.assertEqual(view_all.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    def test_view_all_none(self):
+    def test_view_all_empty(self):
         "It should not error if there are no accounts"
         view_all = self.client.get(
                 BASE_URL,
@@ -164,10 +163,29 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["name"], account.name)
+     
+    def test_get_account_wrong_type(self):
+        """Get Account should abort with code 415"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.get(
+            f"{BASE_URL}/{account.id}", content_type="text/html"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     def test_account_not_found(self):
         """It should Return a 404 instead of erroring if the account is not found"""
         resp = self.client.get(
             f"{BASE_URL}/0", content_type="application/json"
         )
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_account(self):
+        """It should Delete an Account"""
+        account = self._create_accounts(1)[0]
+        resp = self.client.delete(f"{BASE_URL}/{account.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_account_not_found(self):
+        """It should Return a 404 instead of erroring if the account is not found on deletion"""
+        resp = self.client.delete(f"{BASE_URL}/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
