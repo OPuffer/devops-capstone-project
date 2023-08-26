@@ -134,7 +134,7 @@ class TestAccountService(TestCase):
             )
         self.assertEqual(len(view_all.get_json()), 5)
         for j in range(5):
-            self.assertEqual(view_all.get_json()[j]['name'], accounts[j].name)
+            self.assertIn(accounts[j].serialize(), view_all.get_json(), "Account was missing in returned data")
     
     def test_view_all_wrong_datatype(self):
         "View All should abort with code 415"
@@ -188,4 +188,28 @@ class TestAccountService(TestCase):
     def test_delete_account_not_found(self):
         """It should Return a 404 instead of erroring if the account is not found on deletion"""
         resp = self.client.delete(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_update_account(self):
+        """It should update an Account's Details"""
+        test_account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=test_account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        
+        # update the account
+        new_account = resp.get_json()
+        new_account["name"] = "Oliver Puffer"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        updated_account = resp.get_json()
+        self.assertEqual(updated_account["name"], "Oliver Puffer")
+
+    def test_update_account_not_found(self):
+        """It should return a 404 when attempting to update a nonexistent Account's Details"""
+        test_account = AccountFactory()
+        
+        # update the account
+        new_account = test_account.serialize()
+        new_account["name"] = "Oliver Puffer"
+        resp = self.client.put(f"{BASE_URL}/{new_account['id']}", json=new_account)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
