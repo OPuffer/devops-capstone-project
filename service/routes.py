@@ -70,7 +70,7 @@ def list_accounts():
     for acc in Account.all():
         all_accounts.append(acc.serialize())
 
-    return jsonify(all_accounts)
+    return make_response(jsonify(all_accounts), status.HTTP_200_OK)
 ######################################################################
 # READ AN ACCOUNT
 ######################################################################
