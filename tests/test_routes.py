@@ -25,6 +25,8 @@ HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
+
+
 class TestAccountService(TestCase):
     """Account Service Tests"""
 
@@ -130,7 +132,7 @@ class TestAccountService(TestCase):
 
     def test_view_all_accounts(self):
         "It should return all accounts"
-        accounts = account = self._create_accounts(5) 
+        accounts = self._create_accounts(5)
         view_all = self.client.get(
                 BASE_URL,
                 content_type="application/json"
@@ -138,10 +140,10 @@ class TestAccountService(TestCase):
         self.assertEqual(len(view_all.get_json()), 5)
         for j in range(5):
             self.assertIn(accounts[j].serialize(), view_all.get_json(), "Account was missing in returned data")
-    
+
     def test_view_all_wrong_datatype(self):
         "View All should abort with code 415"
-        accounts = account = self._create_accounts(5) 
+        self._create_accounts(5)
         view_all = self.client.get(
                 BASE_URL,
                 content_type="text/html"
@@ -166,7 +168,7 @@ class TestAccountService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["name"], account.name)
-     
+
     def test_get_account_wrong_type(self):
         """Get Account should abort with code 415"""
         account = self._create_accounts(1)[0]
@@ -192,13 +194,13 @@ class TestAccountService(TestCase):
         """It should Return a 404 instead of erroring if the account is not found on deletion"""
         resp = self.client.delete(f"{BASE_URL}/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-    
+
     def test_update_account(self):
         """It should update an Account's Details"""
         test_account = AccountFactory()
         resp = self.client.post(BASE_URL, json=test_account.serialize())
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-        
+
         # update the account
         new_account = resp.get_json()
         new_account["name"] = "Oliver Puffer"
@@ -210,7 +212,7 @@ class TestAccountService(TestCase):
     def test_update_account_not_found(self):
         """It should return a 404 when attempting to update a nonexistent Account's Details"""
         test_account = AccountFactory()
-        
+
         # update the account
         new_account = test_account.serialize()
         new_account["name"] = "Oliver Puffer"
@@ -230,7 +232,7 @@ class TestAccountService(TestCase):
         print(response.headers)
         for key, value in headers.items():
             self.assertEqual(response.headers.get(key), value)
-    
+
     def test_cors_security(self):
         """It should return a CORS header"""
         response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
